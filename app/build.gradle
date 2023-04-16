@@ -4,17 +4,22 @@ plugins {
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
+apply plugin: 'kotlin-kapt'
+
 android {
     namespace 'com.ant.placebook'
     compileSdk 33
 
+// Load the google maps api key stored in local.properties into a string
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
     defaultConfig {
         applicationId "com.ant.placebook"
         minSdk 29
         targetSdk 33
         versionCode 1
         versionName "1.0"
-
+        resValue "string", "google_maps_key", properties.getProperty("MAPS_API_KEY", "")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -40,10 +45,17 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.room:room-runtime:$room_version"
+    implementation 'com.google.android.libraries.places:places:3.1.0' // compare to 2.4.0
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'com.google.android.gms:play-services-maps:18.0.2'
+    implementation "com.google.android.gms:play-services-maps:$maps_services_version"
+    implementation "com.google.android.gms:play-services-location:$location_services_version"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    kapt "androidx.room:room-compiler:$room_version"
 }
