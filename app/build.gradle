@@ -42,16 +42,18 @@ android {
 }
 
 dependencies {
+    // Added dependency not found in textbook? Why does this work?
+    // Thanks to Thiago on StackOverflow for this solution
+    // stackoverflow.com/questions/60830215/by-viewmodels-kotlin-property-delegate-unresolved-reference
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
 
-    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.core:core-ktx:1.10.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     implementation "androidx.room:room-runtime:$room_version"
     implementation 'com.google.android.libraries.places:places:3.1.0' // compare to 2.4.0
     implementation 'com.google.android.material:material:1.8.0'
-    implementation 'com.google.android.gms:play-services-maps:18.0.2'
-    implementation "com.google.android.gms:play-services-maps:$maps_services_version"
-    implementation "com.google.android.gms:play-services-location:$location_services_version"
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.gms:play-services-location:21.0.1'
     testImplementation 'junit:junit:4.13.2'

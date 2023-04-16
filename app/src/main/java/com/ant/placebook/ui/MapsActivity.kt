@@ -5,10 +5,12 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.ant.placebook.R
 import com.ant.placebook.adapter.BookmarkInfoWindowAdapter
+import com.ant.placebook.viewmodel.MapsViewModel
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -17,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
 import com.google.android.libraries.places.api.Places
@@ -30,6 +33,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var placesClient: PlacesClient
+    private val mapsViewModel by viewModels<MapsViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,23 +52,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     // Tasks for when the map is ready
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-        // Assign the InfoWindowAdapter to map
-        map.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this)
-        )
-        // Get the current location
+        setupMapListeners()
         getCurrentLocation()
 
-        // Set up a listener for clicking on points of interest
-        map.setOnPoiClickListener {
-            displayPoi(it)
-        }
     }
 
     // Set up the Places API
     private fun setupPlacesClient() {
         Places.initialize(applicationContext, getString(R.string.google_maps_key))
         placesClient = Places.createClient(this)
+    }
+
+    // Set up the listeners for the map
+    private fun setupMapListeners() {
+
+        // Assign the InfoWindowAdapter to map
+        map.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
+        map.setOnPoiClickListener() {
+            displayPoi(it)
+        }
+        // Set up a listener for clicking on points of interest
+        map.setOnInfoWindowClickListener {
+            handleInfoWindowClick(it)
+        }
     }
 
     // Call display a POI
@@ -159,17 +169,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     // Display the POI's marker
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?) {
         // Add a marker with some info about the POI
-        val marker = map.addMarker(MarkerOptions()
+        val marker = map.addMarker(
+            MarkerOptions()
                 .position(place.latLng as LatLng)
                 .title(place.name)
                 .snippet(place.phoneNumber)
         )
-        marker?.tag = photo
+        marker?.tag = PlaceInfo(place, photo)
     }
 
     // Set up the location services API
     private fun setupLocationClient() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+    }
+
+    // Handle a tap on a place info window
+    private fun handleInfoWindowClick(marker: Marker) {
+        val placeInfo = (marker.tag as PlaceInfo)
+        if (placeInfo.place != null) {
+            mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+        }
+        marker.remove()
     }
 
     // Request fine location permission
@@ -238,4 +258,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val REQUEST_LOCATION = 1
         private const val TAG = "MapsActivity" // For debugging
     }
+
+    // Define a class to hold a Place and a Bitmap
+    class PlaceInfo(val place: Place? = null, val image: Bitmap? = null)
 }
