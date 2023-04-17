@@ -18,6 +18,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -27,6 +28,8 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -54,6 +57,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         map = googleMap
         setupMapListeners()
         getCurrentLocation()
+        createBookmarkerMarkerObserver()
 
     }
 
@@ -65,7 +69,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Set up the listeners for the map
     private fun setupMapListeners() {
-
         // Assign the InfoWindowAdapter to map
         map.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
         map.setOnPoiClickListener() {
@@ -187,9 +190,43 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun handleInfoWindowClick(marker: Marker) {
         val placeInfo = (marker.tag as PlaceInfo)
         if (placeInfo.place != null) {
-            mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+
+            // Use the launch coroutine to launch a coroutine in GlobaLScope
+           GlobalScope.launch {
+               mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+           }
         }
         marker.remove()
+    }
+
+    private fun addPlaceMarker(
+        bookmark: MapsViewModel.BookMarkerView): Marker? {
+        val marker = map.addMarker(MarkerOptions()
+            .position(bookmark.location)
+            .icon(BitmapDescriptorFactory.defaultMarker(
+                BitmapDescriptorFactory.HUE_AZURE))
+            .alpha(0.8f))
+
+        // Replaced with safe call
+            marker?.tag = bookmark
+        return marker
+    }
+
+    private fun displayAllBookmarks(
+        bookmarks: List<MapsViewModel.BookMarkerView>) {
+        bookmarks.forEach {addPlaceMarker(it) }
+    }
+
+    private fun createBookmarkerMarkerObserver() {
+
+        // Get a LiveData object and react to its changes with the observe method
+        mapsViewModel.getBookMarkMarkerViews()?.observe(this) {
+            // Clear the map's markers
+            map.clear()
+            it?.let {
+                displayAllBookmarks(it)
+            }
+        }
     }
 
     // Request fine location permission
