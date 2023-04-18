@@ -24,13 +24,15 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
     fun addBookmarkFromPlace(place: Place, image: Bitmap?) {
 
         // Create a Bookmark and set some of its attributes
+        // toString() is not required for the string values (textbook invoked toString())
         val bookmark = bookmarkRepo.createBookmark()
+//        Log.e("MVM", "Bookmark=$bookmark")
         bookmark.placeId = place.id
-        bookmark.name = place.name.toString()
+        bookmark.name = place.name ?: ""
         bookmark.longitude = place.latLng?.longitude ?: 0.0
         bookmark.latitude = place.latLng?.latitude ?: 0.0
-        bookmark.phone = place.phoneNumber.toString()
-        bookmark.address = place.address.toString()
+        bookmark.phone = place.phoneNumber ?: ""
+        bookmark.address = place.address ?: ""
 
         // Save the Bookmark to the repo and log it
         val newId = bookmarkRepo.addBookmark(bookmark)
@@ -56,8 +58,8 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getBookMarkMarkerViews() :
-    LiveData<List<BookMarkerView>>? {
+    fun getBookMarkMarkerViews():
+            LiveData<List<BookMarkerView>>? {
         if (bookmarks == null) {
             mapBookmarksToMarkerView()
         }

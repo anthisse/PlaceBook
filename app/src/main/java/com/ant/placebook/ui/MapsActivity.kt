@@ -18,16 +18,13 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PointOfInterest
+import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -58,7 +55,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setupMapListeners()
         getCurrentLocation()
         createBookmarkerMarkerObserver()
-
     }
 
     // Set up the Places API
@@ -71,7 +67,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun setupMapListeners() {
         // Assign the InfoWindowAdapter to map
         map.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
-        map.setOnPoiClickListener() {
+        map.setOnPoiClickListener {
             displayPoi(it)
         }
         // Set up a listener for clicking on points of interest
@@ -130,6 +126,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // If there's no photo, just skip to the next step
         if (photoMetadata == null) {
             displayPoiDisplayStep(place, null)
+            return
         }
 
         // Create a fetch request, and pass in the photoMetaData, and maximum dimensions
@@ -187,38 +184,42 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // Handle a tap on a place info window
+    @OptIn(DelicateCoroutinesApi::class)
     private fun handleInfoWindowClick(marker: Marker) {
         val placeInfo = (marker.tag as PlaceInfo)
         if (placeInfo.place != null) {
 
-            // Use the launch coroutine to launch a coroutine in GlobaLScope
-           GlobalScope.launch {
-               mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
-           }
+            // Use the launch coroutine to launch a coroutine in GlobalScope
+            GlobalScope.launch {
+                mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+            }
         }
         marker.remove()
     }
 
     private fun addPlaceMarker(
-        bookmark: MapsViewModel.BookMarkerView): Marker? {
-        val marker = map.addMarker(MarkerOptions()
-            .position(bookmark.location)
-            .icon(BitmapDescriptorFactory.defaultMarker(
-                BitmapDescriptorFactory.HUE_AZURE))
-            .alpha(0.8f))
+        bookmark: MapsViewModel.BookMarkerView
+    ): Marker? {
+        val marker = map.addMarker(
+            MarkerOptions()
+                .position(bookmark.location)
+                .icon(
+                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .alpha(0.8f)
+        )
 
         // Replaced with safe call
-            marker?.tag = bookmark
+        marker?.tag = bookmark
         return marker
     }
 
     private fun displayAllBookmarks(
-        bookmarks: List<MapsViewModel.BookMarkerView>) {
-        bookmarks.forEach {addPlaceMarker(it) }
+        bookmarks: List<MapsViewModel.BookMarkerView>
+    ) {
+        bookmarks.forEach { addPlaceMarker(it) }
     }
 
     private fun createBookmarkerMarkerObserver() {
-
         // Get a LiveData object and react to its changes with the observe method
         mapsViewModel.getBookMarkMarkerViews()?.observe(this) {
             // Clear the map's markers
@@ -243,10 +244,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // If we don't have location permissions, request them
         if (ActivityCompat.checkSelfPermission(
                 this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestLocationPermissions()
 
         } else {

@@ -25,7 +25,8 @@ abstract class PlaceBookDatabase : RoomDatabase() {
                 instance = Room.databaseBuilder(
                     context.applicationContext,
                     PlaceBookDatabase::class.java,
-                    "PlaceBook").build()
+                    "PlaceBook"
+                ).build()
             }
             // Return the PlaceBookDatabase
             return instance as PlaceBookDatabase

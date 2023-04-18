@@ -12,7 +12,7 @@ class BookmarkRepo(context: Context) {
     private val bookmarkDao: BookmarkDao = db.bookmarkDao()
 
     // Allow one Bookmark to be added to the repo. Returns the value of the unique id
-    fun addBookmark(bookmark: Bookmark): Long? {
+    fun addBookmark(bookmark: Bookmark): Long {
         val newId = bookmarkDao.insertBookmark(bookmark)
         bookmark.id = newId
         return newId
@@ -25,7 +25,7 @@ class BookmarkRepo(context: Context) {
 
     // Return a LiveData<List> of all Bookmarks
     val allBookmarks: LiveData<List<Bookmark>>
-    get() {
-        return bookmarkDao.loadAll()
-    }
+        get() {
+            return bookmarkDao.loadAll()
+        }
 }
