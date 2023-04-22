@@ -11,7 +11,7 @@ import com.ant.placebook.model.Bookmark
 interface BookmarkDao {
 
     // Read all bookmarks and return them as a List
-    @Query("SELECT * FROM Bookmark")
+    @Query("SELECT * FROM Bookmark ORDER BY name")
     fun loadAll(): LiveData<List<Bookmark>>
 
     // Return a single Bookmark matching an id

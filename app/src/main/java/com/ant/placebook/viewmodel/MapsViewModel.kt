@@ -43,7 +43,7 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Convert a Bookmark to a BookmarkMarkerView
-    private fun bookmarkToMarkerView(bookmark: Bookmark) =
+    private fun bookmarkToBookmarkView(bookmark: Bookmark) =
         BookmarkView(
             bookmark.id,
             LatLng(bookmark.latitude, bookmark.longitude),
@@ -53,20 +53,20 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
 
     // Map BookmarkRepo to objects that can be used by MapsActivity
-    private fun mapBookmarksToMarkerView() {
+    private fun mapBookmarksToBookmarkView() {
         // Map Bookmarks to BookmarkMarkerViews
         bookmarks = Transformations.map(bookmarkRepo.allBookmarks) { repoBookmarks ->
             // Store the return value of Transformations.map to bookmarks
             repoBookmarks.map { bookmark ->
-                bookmarkToMarkerView(bookmark)
+                bookmarkToBookmarkView(bookmark)
             }
         }
     }
 
-    fun getBookMarkMarkerViews():
+    fun getBookmarkViews():
             LiveData<List<BookmarkView>>? {
         if (bookmarks == null) {
-            mapBookmarksToMarkerView()
+            mapBookmarksToBookmarkView()
         }
         return bookmarks
     }
