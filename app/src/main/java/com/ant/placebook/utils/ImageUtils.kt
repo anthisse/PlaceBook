@@ -3,10 +3,14 @@ package com.ant.placebook.utils
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Environment
 import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 object ImageUtils {
     private val TAG = "ImageUtils"
@@ -49,11 +53,18 @@ object ImageUtils {
 
     // Load a Bitmap
     fun loadBitmapFromFile(context: Context, filename: String): Bitmap? {
-
         // Get the absolute file path
         val filePath = File(context.filesDir, filename).absolutePath
-
         // Load the image from the file and return the image
         return BitmapFactory.decodeFile(filePath)
+    }
+
+    // Create an image file
+    @Throws(IOException::class)
+    fun createUniqueImageFile(context: Context): File {
+        val timeStamp = SimpleDateFormat("yyyyMMddHHmmss").format(Date())
+        val filename = "PlaceBook_" + timeStamp + "_"
+        val filesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(filename, ".jpg", filesDir)
     }
 }
