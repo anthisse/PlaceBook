@@ -2,10 +2,14 @@ package com.ant.placebook.utils
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Log
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.FileOutputStream
 
 object ImageUtils {
+    private val TAG = "ImageUtils"
 
     // Save the BitMap to a file instead of storing it directly in the database
     fun saveBitmapToFile(context: Context, bitmap: Bitmap, filename: String) {
@@ -38,7 +42,18 @@ object ImageUtils {
 
         } catch (e: Exception) {
             // Catch any exception, log the error, and print the stack trace
+            Log.e(TAG, "Exception when opening or writing file.")
             e.printStackTrace()
         }
+    }
+
+    // Load a Bitmap
+    fun loadBitmapFromFile(context: Context, filename: String): Bitmap? {
+
+        // Get the absolute file path
+        val filePath = File(context.filesDir, filename).absolutePath
+
+        // Load the image from the file and return the image
+        return BitmapFactory.decodeFile(filePath)
     }
 }

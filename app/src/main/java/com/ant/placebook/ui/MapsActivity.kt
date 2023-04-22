@@ -163,7 +163,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     )
                 }
             }
-
     }
 
     // Display the POI's marker
@@ -176,6 +175,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .snippet(place.phoneNumber)
         )
         marker?.tag = PlaceInfo(place, photo)
+
+        // Display the Info window for a marker
+        marker?.showInfoWindow()
     }
 
     // Set up the location services API
@@ -203,8 +205,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val marker = map.addMarker(
             MarkerOptions()
                 .position(bookmark.location)
-                .icon(
-                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .title(bookmark.name)
+                .snippet(bookmark.phone)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
                 .alpha(0.8f)
         )
 
@@ -244,7 +247,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // If we don't have location permissions, request them
         if (ActivityCompat.checkSelfPermission(
                 this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             requestLocationPermissions()
 
         } else {
