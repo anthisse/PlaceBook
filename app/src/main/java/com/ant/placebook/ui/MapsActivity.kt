@@ -1,6 +1,7 @@
 package com.ant.placebook.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -188,15 +189,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     // Handle a tap on a place info window
     @OptIn(DelicateCoroutinesApi::class)
     private fun handleInfoWindowClick(marker: Marker) {
-        val placeInfo = (marker.tag as PlaceInfo)
-        if (placeInfo.place != null) {
+        // When marker.tag is a PlaceInfo, save the bookmark to the database
+        when (marker.tag) {
+            is PlaceInfo -> {
+                val placeInfo = (marker.tag as PlaceInfo)
+                if (placeInfo.place != null && placeInfo.image != null) {
+                    GlobalScope.launch {
+                        mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+                    }
+                }
+                marker.remove()
+            }
 
-            // Use the launch coroutine to launch a coroutine in GlobalScope
-            GlobalScope.launch {
-                mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+            // When it's a BookMarkerView, start BookMarkerView
+            is MapsViewModel.BookMarkerView -> {
+                val bookmarkMarkerView = (marker.tag as MapsViewModel.BookMarkerView)
+                marker.hideInfoWindow()
+                bookmarkMarkerView.id?.let {
+                    startBookmarkDetails(it)
+                }
             }
         }
-        marker.remove()
     }
 
     private fun addPlaceMarker(
@@ -294,7 +307,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // Start BookmarkDetailsActivity
+    private fun startBookmarkDetails(bookmarkId: Long) {
+        val intent = Intent(this, BookmarkDetailsActivity::class.java)
+
+        // Add the bookmarkId to the Intent
+        intent.putExtra(EXTRA_BOOKMARK_ID, bookmarkId)
+        startActivity(intent)
+    }
+
     companion object {
+        const val EXTRA_BOOKMARK_ID = "com.ant.placebook.EXTRA_BOOKMARK_ID"
         private const val REQUEST_LOCATION = 1
         private const val TAG = "MapsActivity" // For debugging
     }

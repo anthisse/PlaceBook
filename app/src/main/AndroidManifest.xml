@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
-    <!--Access location. Needs both coarse and fine location to access fine location-->
+    <!-- Access location. Needs both coarse and fine location to access fine location -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
@@ -15,13 +14,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PlaceBook"
         tools:targetApi="31">
+        <activity
+            android:name="com.ant.placebook.ui.BookmarkDetailsActivity"
+            android:label="Bookmark"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden">
+        </activity>
 
-        <!--API Key: found in local.properties-->
+        <!-- API Key: found in local.properties -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
-
-        <!--Map Activity-->
+            android:value="${MAPS_API_KEY}" /> <!-- Map Activity -->
         <activity
             android:name=".ui.MapsActivity"
             android:exported="true"
