@@ -3,11 +3,11 @@ package com.ant.placebook.adapter
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.View
-import com.ant.placebook.R
 import com.ant.placebook.databinding.ContentBookmarkInfoBinding
 import com.ant.placebook.ui.MapsActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
+import com.ant.placebook.viewmodel.MapsViewModel
 
 class BookmarkInfoWindowAdapter(context: Activity) :
     GoogleMap.InfoWindowAdapter {
@@ -28,15 +28,21 @@ class BookmarkInfoWindowAdapter(context: Activity) :
         binding.phone.text = marker.snippet ?: ""
         val imageView = binding.photo
 
-        // FIXME: The app crashes when clicking on a saved marker,
-        //  since no image is saved in Bookmark
-        try {
-            // Set the image
-            imageView.setImageBitmap((marker.tag as MapsActivity.PlaceInfo).image)
-            // Catch the exception produced when clicking a saved bookmark
-        } catch (ex: ClassCastException) {
-            // Just set a default image instead of trying to set the image from the database
-            imageView.setImageDrawable(binding.photo.context.getDrawable(R.drawable.default_photo))
+        when (marker.tag) {
+
+            // When marker.tag is a PlaceInfo then set the bitmap from PlaceInfo.image
+            is MapsActivity.PlaceInfo -> {
+                imageView.setImageBitmap(
+                    (marker.tag as MapsActivity.PlaceInfo).image)
+            }
+
+            // When marker.tag is a BookmarkMarkerView, set the bitmap from BookmarkMarkerView
+            is MapsViewModel.BookMarkerView -> {
+                val bookmarkView = marker.tag as
+                        MapsViewModel.BookMarkerView
+                //TODO set the bitmap
+            }
+
         }
 
         return binding.root
