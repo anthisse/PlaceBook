@@ -17,7 +17,7 @@ import com.google.android.libraries.places.api.model.Place
 class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val TAG = "MapsViewModel"
-    private var bookmarks: LiveData<List<BookMarkerView>>? = null
+    private var bookmarks: LiveData<List<BookmarkView>>? = null
 
     // Create BookmarkRepo object and pass it the application's context
     private val bookmarkRepo: BookmarkRepo = BookmarkRepo(getApplication())
@@ -44,7 +44,7 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
     // Convert a Bookmark to a BookmarkMarkerView
     private fun bookmarkToMarkerView(bookmark: Bookmark) =
-        BookMarkerView(
+        BookmarkView(
             bookmark.id,
             LatLng(bookmark.latitude, bookmark.longitude),
             bookmark.name,
@@ -64,7 +64,7 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getBookMarkMarkerViews():
-            LiveData<List<BookMarkerView>>? {
+            LiveData<List<BookmarkView>>? {
         if (bookmarks == null) {
             mapBookmarksToMarkerView()
         }
@@ -72,7 +72,7 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Hold info to plot a marker
-    data class BookMarkerView(
+    data class BookmarkView(
         var id: Long? = null,
         var location: LatLng = LatLng(0.0, 0.0),
         var name: String = "",

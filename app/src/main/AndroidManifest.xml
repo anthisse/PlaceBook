@@ -24,11 +24,13 @@
         <!-- API Key: found in local.properties -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" /> <!-- Map Activity -->
+            android:value="${MAPS_API_KEY}" />
+        <!-- Map Activity -->
         <activity
             android:name=".ui.MapsActivity"
             android:exported="true"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -38,9 +38,9 @@ class BookmarkInfoWindowAdapter(val context: Activity) :
             }
 
             // When marker.tag is a BookmarkMarkerView, set the bitmap from BookmarkMarkerView
-            is MapsViewModel.BookMarkerView -> {
+            is MapsViewModel.BookmarkView -> {
                 val bookmarkView = marker.tag as
-                        MapsViewModel.BookMarkerView
+                        MapsViewModel.BookmarkView
                 // Set the bitmap
                 imageView.setImageBitmap(bookmarkView.getImage(context))
             }
