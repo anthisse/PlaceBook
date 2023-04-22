@@ -249,12 +249,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         return marker
     }
 
-    private fun displayAllBookmarks(
-        bookmarks: List<MapsViewModel.BookmarkView>
-    ) {
+    // Display all the bookmarks
+    private fun displayAllBookmarks(bookmarks: List<MapsViewModel.BookmarkView>) {
+        // Loop through the list of bookmarks and add a marker at each one
         bookmarks.forEach { addPlaceMarker(it) }
     }
 
+    // Create an observer for the Bookmarks
     private fun createBookmarkObserver() {
         // Get a LiveData object and react to its changes with the observe method
         mapsViewModel.getBookmarkViews()?.observe(this) {

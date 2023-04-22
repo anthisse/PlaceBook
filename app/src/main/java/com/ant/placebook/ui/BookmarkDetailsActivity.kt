@@ -3,6 +3,7 @@ package com.ant.placebook.ui
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -11,7 +12,8 @@ import com.ant.placebook.databinding.ActivityBookmarkDetailsBinding
 import com.ant.placebook.viewmodel.BookmarkDetailsViewModel
 
 // Set the content view with DataBindingUtil
-class BookmarkDetailsActivity : AppCompatActivity() {
+class BookmarkDetailsActivity : AppCompatActivity(),
+    PhotoOptionDialogFragment.PhotoOptionDialogListener {
     private lateinit var databinding: ActivityBookmarkDetailsBinding
     private val bookmarkDetailsViewModel by viewModels<BookmarkDetailsViewModel>()
     private var bookmarkDetailsView: BookmarkDetailsViewModel.BookmarkDetailsView? = null
@@ -34,6 +36,11 @@ class BookmarkDetailsActivity : AppCompatActivity() {
             val placeImage = bookmarkView.getImage(this)
             placeImage?.let {
                 databinding.imageViewPlace.setImageBitmap(placeImage)
+
+                // Replace the image when the image is tapped
+                databinding.imageViewPlace.setOnClickListener {
+                    replaceImage()
+                }
             }
         }
     }
@@ -93,4 +100,18 @@ class BookmarkDetailsActivity : AppCompatActivity() {
             // Otherwise, just super call the onOptionsItemSelected method
             else -> super.onOptionsItemSelected(item)
         }
+
+    override fun onCaptureClick() {
+        Toast.makeText(this, "Camera Capture", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onPickClick() {
+        Toast.makeText(this, "Gallery Pick", Toast.LENGTH_SHORT).show()
+    }
+
+    // Create the PhotoOptionDialogFragment
+    private fun replaceImage() {
+        val newFragment = PhotoOptionDialogFragment.newInstance(this)
+        newFragment?.show(supportFragmentManager, "photoOptionDialog")
+    }
 }
