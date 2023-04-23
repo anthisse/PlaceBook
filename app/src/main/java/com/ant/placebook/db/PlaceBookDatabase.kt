@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.ant.placebook.model.Bookmark
 
 // Database PlaceBookDatabase
-@Database(entities = arrayOf(Bookmark::class), version = 2)
+@Database(entities = arrayOf(Bookmark::class), version = 3)
 abstract class PlaceBookDatabase : RoomDatabase() {
 
     // Return an instance of a DAO interface

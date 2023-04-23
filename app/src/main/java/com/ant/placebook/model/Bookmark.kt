@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.ant.placebook.utils.FileUtils
 import com.ant.placebook.utils.ImageUtils
 
 // Database entity class Bookmark
@@ -19,7 +20,8 @@ data class Bookmark(
     var latitude: Double = 0.0,
     var longitude: Double = 0.0,
     var phone: String = "",
-    var notes: String = ""
+    var notes: String = "",
+    var category: String = ""
 ) {
 
     // Save an image
@@ -27,6 +29,13 @@ data class Bookmark(
         // If the bookmark has an id, then save the image to a file
         id?.let {
             ImageUtils.saveBitmapToFile(context, image, generateImageFilename(it))
+        }
+    }
+
+    // Delete an image
+    fun deleteImage(context: Context) {
+        id?.let {
+            FileUtils.deleteFile(context, generateImageFilename(it))
         }
     }
 

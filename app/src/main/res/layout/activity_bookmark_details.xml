@@ -3,9 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
+
         <variable
             name="bookmarkDetailsView"
-            type="com.ant.placebook.viewmodel.BookmarkDetailsViewModel.BookmarkDetailsView"/>
+            type="com.ant.placebook.viewmodel.BookmarkDetailsViewModel.BookmarkDetailsView" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -59,11 +60,31 @@
                     style="@style/BookmarkLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/name"
                     android:layout_marginTop="16dp"
+                    android:text="@string/name"
                     app:layout_constraintBaseline_toBaselineOf="@+id/editTextName"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/imageViewPlace" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/textViewCategoryLabel"
+                    style="@style/BookmarkLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/category"
+                    app:layout_constraintBottom_toBottomOf="@+id/spinnerCategory"
+                    app:layout_constraintEnd_toStartOf="@+id/barrier1"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/spinnerCategory" />
+
+                <androidx.constraintlayout.widget.Barrier
+                    android:id="@+id/barrier1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:barrierDirection="start"
+                    app:constraint_referenced_ids="editTextName, editTextNotes,editTextPhone, editTextAddress,spinnerCategory" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/textViewNotes"
@@ -74,7 +95,7 @@
                     android:text="@string/notes"
                     app:layout_constraintBaseline_toBaselineOf="@+id/editTextNotes"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textViewName" />
+                    app:layout_constraintTop_toBottomOf="@+id/textViewCategoryLabel" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/textViewPhone"
@@ -97,22 +118,15 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/textViewPhone" />
 
-                <androidx.constraintlayout.widget.Barrier
-                    android:id="@+id/barrier1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:barrierDirection="start"
-                    app:constraint_referenced_ids="editTextName, editTextNotes,editTextPhone, editTextAddress" />
-
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTextName"
                     style="@style/BookmarkEditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
                     android:hint="@string/name"
                     android:text="@{bookmarkDetailsView.name}"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginStart="16dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/barrier1"
                     app:layout_constraintTop_toBottomOf="@+id/imageViewPlace" />
@@ -122,39 +136,68 @@
                     style="@style/BookmarkEditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:hint="@string/enter_notes"
                     android:text="@{bookmarkDetailsView.notes}"
-                    android:layout_marginStart="16dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/barrier1"
-                    app:layout_constraintTop_toBottomOf="@+id/editTextName" />
+                    app:layout_constraintTop_toBottomOf="@+id/spinnerCategory" />
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTextPhone"
                     style="@style/BookmarkEditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:hint="@string/phone_number"
                     android:text="@{bookmarkDetailsView.phone}"
-                    android:layout_marginStart="16dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/barrier1"
                     app:layout_constraintTop_toBottomOf="@+id/editTextNotes" />
+
+                <ImageView
+                    android:id="@+id/imageViewCategory"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="16dp"
+                    android:src="@drawable/ic_other"
+                    app:layout_constraintBottom_toBottomOf="@+id/spinnerCategory"
+                    app:layout_constraintStart_toEndOf="@+id/barrier1"
+                    app:layout_constraintTop_toTopOf="@+id/spinnerCategory" />
+
+                <Spinner
+                    android:id="@+id/spinnerCategory"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight='1.4'
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/imageViewCategory"
+                    app:layout_constraintTop_toBottomOf="@+id/editTextName" />
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTextAddress"
                     style="@style/BookmarkEditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="@string/address"
-                    android:text="@{bookmarkDetailsView.address}"
-                    android:inputType="textMultiLine"
                     android:layout_marginStart="16dp"
+                    android:hint="@string/address"
+                    android:inputType="textMultiLine"
+                    android:text="@{bookmarkDetailsView.address}"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/barrier1"
                     app:layout_constraintTop_toBottomOf="@+id/editTextPhone" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:layout_gravity="bottom|end"
+            app:srcCompat="@android:drawable/ic_dialog_email"/>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

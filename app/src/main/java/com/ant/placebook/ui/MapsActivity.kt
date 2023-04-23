@@ -1,12 +1,16 @@
 package com.ant.placebook.ui
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
+import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +21,8 @@ import com.ant.placebook.adapter.BookmarkInfoWindowAdapter
 import com.ant.placebook.adapter.BookmarkListAdapter
 import com.ant.placebook.databinding.ActivityMapsBinding
 import com.ant.placebook.viewmodel.MapsViewModel
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -27,9 +33,12 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -89,7 +98,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Set up a listener for clicking on points of interest
         map.setOnInfoWindowClickListener {
             handleInfoWindowClick(it)
+            }
+        // Set up a listener for clicking on the search button
+        databinding.mainMapView.fab.setOnClickListener {
+            searchAtCurrentLocation()
         }
+
+        // Set up a long click listener for adding new bookmarks
+        map.setOnMapLongClickListener { latLng -> newBookmark(latLng) }
     }
 
     // Call display a POI
@@ -109,7 +125,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Place.Field.PHONE_NUMBER,
             Place.Field.PHOTO_METADATAS,
             Place.Field.ADDRESS,
-            Place.Field.LAT_LNG
+            Place.Field.LAT_LNG,
+            Place.Field.TYPES
         )
 
         // Create a fetch request
@@ -235,7 +252,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .position(bookmark.location)
                 .title(bookmark.name)
                 .snippet(bookmark.phone)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .icon(bookmark.categoryResourceId?.let {
+                    BitmapDescriptorFactory.fromResource(it)
+                })
                 .alpha(0.8f)
         )
 
@@ -325,7 +344,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Manage the toolbar's functionality and appearance
         val toggle = ActionBarDrawerToggle(
             this, databinding.drawerLayout, databinding.mainMapView.toolbar,
-            R.string.open_drawer, R.string.close_drawer)
+            R.string.open_drawer, R.string.close_drawer
+        )
         // Ensure the toggle icon is displayed
         toggle.syncState()
 
@@ -344,6 +364,75 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMapToLocation(location: Location) {
         val latLng = LatLng(location.latitude, location.longitude)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f))
+    }
+
+    private fun searchAtCurrentLocation() {
+
+        // Define a list of fields of places
+        val placeFields = listOf(
+            Place.Field.ID,
+            Place.Field.NAME,
+            Place.Field.PHONE_NUMBER,
+            Place.Field.LAT_LNG,
+            Place.Field.ADDRESS,
+            Place.Field.TYPES
+        )
+
+        // Get the bounds of the current map
+        val bounds = RectangularBounds.newInstance(map.projection.visibleRegion.latLngBounds)
+
+        // Build an intent and overlay the search widget with the current activity
+        try {
+            val intent = Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, placeFields)
+                .setLocationBias(bounds)
+                .build(this)
+
+            // Start the activity
+            startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE)
+
+        } catch (e: GooglePlayServicesRepairableException) {
+            // Catch exceptions when searching
+            Toast.makeText(this, "Problems Searching", Toast.LENGTH_LONG).show()
+            Log.e(TAG, "Problems Searching")
+
+        } catch (e: GooglePlayServicesNotAvailableException) {
+            // Catch an exception when Google Play Services are not available
+            Toast.makeText(
+                this,
+                "Problems Searching. Google Play is not available",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    // Add a new bookmark from a location
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun newBookmark(latLng: LatLng) {
+        GlobalScope.launch {
+            val bookmarkId = mapsViewModel.addBookmark(latLng)
+            bookmarkId?.let {
+                startBookmarkDetails(it)
+            }
+        }
+    }
+
+    // Set a flag to prevent user interaction
+    private fun disableInteraction() {
+        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    }
+
+    // Clear FLAG_NOT_TOUCHABLE
+    private fun enableInteraction() {
+        window.clearFlags(
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        )
+    }
+
+    // Show the progress of some process
+    private fun showProgress() {
+        databinding.mainMapView.progressBar.visibility = ProgressBar.VISIBLE
+        disableInteraction()
     }
 
     // Move the map camera to a Bookmark
@@ -386,9 +475,31 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // When the request code is correct
+        when (requestCode) {
+            // If a place was found and the data is not null
+            AUTOCOMPLETE_REQUEST_CODE -> if (resultCode == Activity.RESULT_OK && data != null) {
+                // Get the place
+                val place = Autocomplete.getPlaceFromIntent(data)
+
+                // Convert latLng to a location
+                val location = Location("")
+                location.latitude = place. latLng?.latitude ?: 0.0
+                location.longitude = place.latLng.longitude ?: 0.0
+
+                // Display the place info window
+                displayPoiGetPhotoStep(place)
+            }
+        }
+    }
+
     companion object {
         const val EXTRA_BOOKMARK_ID = "com.ant.placebook.EXTRA_BOOKMARK_ID"
         private const val REQUEST_LOCATION = 1
+        private const val AUTOCOMPLETE_REQUEST_CODE = 2
         private const val TAG = "MapsActivity" // For debugging
     }
 

@@ -25,7 +25,11 @@ class BookmarkDetailsViewModel(application: Application) :
             bookmark.name,
             bookmark.phone,
             bookmark.address,
-            bookmark.notes
+            bookmark.notes,
+            bookmark.category,
+            bookmark.longitude,
+            bookmark.latitude,
+            bookmark.placeId
         )
     }
 
@@ -33,7 +37,11 @@ class BookmarkDetailsViewModel(application: Application) :
     private fun mapBookmarkToBookmarkView(bookmarkId: Long) {
         val bookmark = bookmarkRepo.getLiveBookmark(bookmarkId)
         bookmarkDetailsView = Transformations.map(bookmark)
-        { repoBookmark -> bookmarkToBookmarkView(repoBookmark) }
+        { repoBookmark ->
+            repoBookmark?.let { repoBookmark ->
+                bookmarkToBookmarkView(repoBookmark)
+            }
+        }
     }
 
     // Update the bookmark view model class
@@ -43,12 +51,15 @@ class BookmarkDetailsViewModel(application: Application) :
         }
 
         // Populate the bookmarkView's parameters
+        // TODO It appears that the textbook calls bookmarkDetailsView.attribute rather than
+        //  bookmarkView.attribute
         if (bookmark != null) {
             bookmark.id = bookmarkView.id
             bookmark.name = bookmarkView.name
             bookmark.phone = bookmarkView.phone
             bookmark.address = bookmarkView.address
             bookmark.notes = bookmarkView.notes
+            bookmark.category = bookmarkView.category
         }
 
         // Return the altered bookmark
@@ -67,13 +78,34 @@ class BookmarkDetailsViewModel(application: Application) :
         return bookmarkDetailsView
     }
 
+    // Delete a bookmark
+    @OptIn(DelicateCoroutinesApi::class)
+    fun deleteBookmark(bookmarkDetailsView: BookmarkDetailsView) {
+
+        // Load a bookmark
+        GlobalScope.launch {
+            val bookmark = bookmarkDetailsView.id?.let {
+                bookmarkRepo.getBookmark(it)
+            }
+
+            // If a bookmark is found, delete it
+            bookmark?.let {
+                bookmarkRepo.deleteBookmark(it)
+            }
+        }
+    }
+
     // Hold the info required by View
     data class BookmarkDetailsView(
         var id: Long? = null,
         var name: String = "",
         var phone: String = "",
         var address: String = "",
-        var notes: String = ""
+        var notes: String = "",
+        var category: String = "",
+        var longitude: Double = 0.0,
+        var latitude: Double = 0.0,
+        var placeId: String? = null
     ) {
         // Get the image
         fun getImage(context: Context) = id?.let {
@@ -101,5 +133,15 @@ class BookmarkDetailsViewModel(application: Application) :
             val bookmark = bookmarkViewToBookmark(bookmarkView)
             bookmark?.let { bookmarkRepo.updateBookmark(it) }
         }
+    }
+
+    // Get the categories of the bookmarks
+    fun getCategories(): List<String> {
+        return bookmarkRepo.categories
+    }
+
+    // Get the resource ID of a Category
+    fun getCategoryResourceId(category: String): Int? {
+        return bookmarkRepo.getCategoryResourceId(category)
     }
 }

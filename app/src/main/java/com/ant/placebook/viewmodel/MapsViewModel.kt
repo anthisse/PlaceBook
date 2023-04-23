@@ -34,7 +34,8 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         bookmark.phone = place.phoneNumber ?: ""
         bookmark.address = place.address ?: ""
 
-        // Save the Bookmark to the repo and log it
+        // Save the Bookmark and its category to the repo and log it
+        bookmark.category = getPlaceCategory(place)
         val newId = bookmarkRepo.addBookmark(bookmark)
         Log.i(TAG, "New bookmark $newId added to the database.")
 
@@ -48,7 +49,8 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
             bookmark.id,
             LatLng(bookmark.latitude, bookmark.longitude),
             bookmark.name,
-            bookmark.phone
+            bookmark.phone,
+            bookmarkRepo.getCategoryResourceId(bookmark.category)
         )
 
 
@@ -63,6 +65,26 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Get a place's category
+    private fun getPlaceCategory(place: Place): String {
+
+        // Default the category to "Other"
+        var category = "Other"
+        val types = place.types
+
+        types?.let { placeTypes ->
+            // If the placeTypes List is populated
+            if (placeTypes.size > 0) {
+                // Extract the first type from the List
+                val placeType = placeTypes[0]
+                // Convert from a placeType to a category
+                category = bookmarkRepo.placeTypeToCategory(placeType)
+            }
+        }
+        // Return the category
+        return category
+    }
+
     fun getBookmarkViews():
             LiveData<List<BookmarkView>>? {
         if (bookmarks == null) {
@@ -71,12 +93,23 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         return bookmarks
     }
 
+    // Add a new bookmark at some location
+    fun addBookmark(latLng: LatLng) : Long {
+        val bookmark = bookmarkRepo.createBookmark()
+        bookmark.name = "Untitled"
+        bookmark.longitude = latLng.longitude
+        bookmark.latitude = latLng.latitude
+        bookmark.category = "Other"
+        return bookmarkRepo.addBookmark(bookmark)
+    }
+
     // Hold info to plot a marker
     data class BookmarkView(
         var id: Long? = null,
         var location: LatLng = LatLng(0.0, 0.0),
         var name: String = "",
-        var phone: String = ""
+        var phone: String = "",
+        val categoryResourceId: Int? = null
     ) {
 
         // Get an image for the marker

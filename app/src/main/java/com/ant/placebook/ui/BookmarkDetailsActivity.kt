@@ -9,7 +9,11 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
@@ -18,6 +22,7 @@ import com.ant.placebook.databinding.ActivityBookmarkDetailsBinding
 import com.ant.placebook.utils.ImageUtils
 import com.ant.placebook.viewmodel.BookmarkDetailsViewModel
 import java.io.File
+import java.net.URLEncoder
 
 // Set the content view with DataBindingUtil
 class BookmarkDetailsActivity : AppCompatActivity(),
@@ -30,14 +35,23 @@ class BookmarkDetailsActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         databinding = DataBindingUtil.setContentView(this, R.layout.activity_bookmark_details)
+
+        // Setup the layout components
         setupToolbar()
+        setupFab()
 
         // Get the intent data
         getIntentData()
     }
 
+    // Set up the toolbar
     private fun setupToolbar() {
         setSupportActionBar(databinding.toolbar)
+    }
+
+    // Set up a FAB
+    private fun setupFab() {
+        databinding.fab.setOnClickListener { sharePlace() }
     }
 
     // Load the image from bookmarkView and set the imageViewPlace
@@ -69,9 +83,10 @@ class BookmarkDetailsActivity : AppCompatActivity(),
             it?.let {
                 bookmarkDetailsView = it
 
-                // Set databinding and fill in the text fields
+                // Set databinding and fill in the text fields and categories
                 databinding.bookmarkDetailsView = it
                 populateImageView()
+                populateCategoryList()
             }
         }
     }
@@ -87,6 +102,7 @@ class BookmarkDetailsActivity : AppCompatActivity(),
             bookmarkView.notes = databinding.editTextNotes.text.toString()
             bookmarkView.address = databinding.editTextAddress.text.toString()
             bookmarkView.phone = databinding.editTextPhone.text.toString()
+            bookmarkView.category = databinding.spinnerCategory.selectedItem as String
             bookmarkDetailsViewModel.updateBookmark(bookmarkView)
         }
         finish() // Close the activity
@@ -118,8 +134,118 @@ class BookmarkDetailsActivity : AppCompatActivity(),
     // Get an image from its Uri
     private fun getImageWithAuthority(uri: Uri) = ImageUtils.decodeUriStreamToSize(
         uri, resources.getDimensionPixelSize(R.dimen.default_image_width),
-            resources.getDimensionPixelSize(R.dimen.default_image_height), this
-        )
+        resources.getDimensionPixelSize(R.dimen.default_image_height), this
+    )
+
+    // Populate the category list
+    private fun populateCategoryList() {
+
+        // Return immediately if bookmarkDetailsView is null
+        val bookmarkView = bookmarkDetailsView ?: return
+
+        // Get the category icon resourceId
+        val resourceId = bookmarkDetailsViewModel.getCategoryResourceId(bookmarkView.category)
+
+        // If it's not null, update imageViewCategory to category icon
+        resourceId?.let { databinding.imageViewCategory.setImageResource(it) }
+
+        // Get the list of categories and populate a spinner
+        val categories = bookmarkDetailsViewModel.getCategories()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        // Assign the Adapter to the spinnerCategory control
+        databinding.spinnerCategory.adapter = adapter
+
+        // Update spinnerCategory to reflect the current category selection
+        val placeCategory = bookmarkView.category
+        databinding.spinnerCategory.setSelection(adapter.getPosition(placeCategory))
+
+        // Avoid the initial call by Android to onItemSelected()
+        databinding.spinnerCategory.post {
+
+            // Assign spinnerCategory.onItemSelectedListener
+            // to an instance of the onItemSelectedListener class
+            databinding.spinnerCategory.onItemSelectedListener =
+                object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>?,
+                        view: View?,
+                        position: Int,
+                        id: Long
+                    ) {
+                        // Replaced with safe call
+                        // Set the category to a string
+                        val category = parent?.getItemAtPosition(position) as String
+
+                        // Set resourceId to the category's resource ID and set its image
+                        val resourceId = bookmarkDetailsViewModel.getCategoryResourceId(category)
+                        resourceId?.let {
+                            databinding.imageViewCategory.setImageResource(it)
+                        }
+                    }
+
+                    // Required abstract function for the object
+                    override fun onNothingSelected(parent: AdapterView<*>?) {
+                    }
+                }
+        }
+    }
+
+    // Delete a bookmark
+    private fun deleteBookmark() {
+        val bookmarkView = bookmarkDetailsView ?: return
+
+        // Display an AlertDialog for deleting a bookmark
+        AlertDialog.Builder(this)
+            .setMessage("Delete?")
+            .setPositiveButton("Ok") {
+                // If "Ok" is clicked, delete the bookmark
+                    _, _ ->
+                bookmarkDetailsViewModel.deleteBookmark(bookmarkView)
+                finish()
+            }
+            .setNegativeButton("Cancel", null)
+            .create().show()
+    }
+
+    // TODO private fun sharePlace()
+
+    // Share a place
+    private fun sharePlace() {
+
+        // Define bookmark view as a bookmarkDetailsView. If it's null, return
+        val bookmarkView = bookmarkDetailsView ?: return
+
+        // Initialize a String for a mapUrl
+        var mapUrl = ""
+
+        // If the place's id is null get a Google Maps URL based on lat and long
+        if (bookmarkView.placeId == null) {
+            val location = URLEncoder.encode(
+                "${bookmarkView.latitude}," +
+                        "${bookmarkView.longitude}", "utf-8"
+            )
+            mapUrl = "https://www.google.com/maps/dir/?api=1&destination=$location"
+        } else {
+            // Otherwise, the URL comes from the place's ID
+            val name = URLEncoder.encode(bookmarkView.name, "utf-8")
+            mapUrl = "https://www.google.com/maps/dir/?api=1&destination=" +
+                    "$name&destination_place_id=${bookmarkView.placeId}"
+        }
+
+        // Create an Intent to share the location
+        val sendIntent = Intent()
+
+        // Set the Intent action to send, and add the text and subject as extras
+        sendIntent.action = Intent.ACTION_SEND
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "Check out ${bookmarkView.name} at:\n$mapUrl")
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Sharing ${bookmarkView.name}")
+        sendIntent.type = "text/plain"
+
+        // Start the activity
+        startActivity(sendIntent)
+    }
 
     // Override onCreateOptionsMenu and provide Toolbar items
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -136,6 +262,11 @@ class BookmarkDetailsActivity : AppCompatActivity(),
                 saveChanges()
                 true
             }
+            R.id.action_delete -> {
+                deleteBookmark()
+                true
+            }
+
             // Otherwise, just super call the onOptionsItemSelected method
             else -> super.onOptionsItemSelected(item)
         }
