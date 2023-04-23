@@ -2,12 +2,13 @@ package com.ant.placebook.ui
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -91,6 +92,35 @@ class BookmarkDetailsActivity : AppCompatActivity(),
         finish() // Close the activity
     }
 
+    // Update the image
+    private fun updateImage(image: Bitmap) {
+        // Assign an image to imageViewPlace
+        bookmarkDetailsView?.let {
+            databinding.imageViewPlace.setImageBitmap(image)
+            // Set the image
+            it.setImage(this, image)
+        }
+    }
+
+    // Create the PhotoOptionDialogFragment
+    private fun replaceImage() {
+        val newFragment = PhotoOptionDialogFragment.newInstance(this)
+        newFragment?.show(supportFragmentManager, "photoOptionDialog")
+    }
+
+    // Get an image from its path
+    private fun getImageWithPath(filePath: String) = ImageUtils.decodeFileToSize(
+        filePath,
+        resources.getDimensionPixelSize(R.dimen.default_image_width),
+        resources.getDimensionPixelSize(R.dimen.default_image_height)
+    )
+
+    // Get an image from its Uri
+    private fun getImageWithAuthority(uri: Uri) = ImageUtils.decodeUriStreamToSize(
+        uri, resources.getDimensionPixelSize(R.dimen.default_image_width),
+            resources.getDimensionPixelSize(R.dimen.default_image_height), this
+        )
+
     // Override onCreateOptionsMenu and provide Toolbar items
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_bookmark_details, menu)
@@ -150,18 +180,56 @@ class BookmarkDetailsActivity : AppCompatActivity(),
         }
     }
 
-    override fun onPickClick() {
-        Toast.makeText(this, "Gallery Pick", Toast.LENGTH_SHORT).show()
+    // Override onActivityResult() to get a photo
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Make sure the result code is correct
+        if (resultCode == android.app.Activity.RESULT_OK) {
+
+            // When the requestCode is REQUEST_CAPTURE_IMAGE
+            when (requestCode) {
+                REQUEST_CAPTURE_IMAGE -> {
+                    // Get the photoFile
+                    val photoFile = photoFile ?: return
+                    // Revoke write permissions
+                    val uri = FileProvider.getUriForFile(
+                        this,
+                        "com.ant.placebook.fileprovider", photoFile
+                    )
+                    revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    // Get the image from the photo's path
+                    val image = getImageWithPath(photoFile.absolutePath)
+                    // Rotate the image if required
+                    val bitmap = ImageUtils.rotateImageIfRequired(this, image, uri)
+                    // Update the bookmark image
+                    updateImage(bitmap)
+                }
+                REQUEST_GALLERY_IMAGE -> if (data != null && data.data != null) {
+                    val imageUri = data.data as Uri
+
+                    // Load the selected image
+                    val image = getImageWithAuthority(imageUri)
+                    image?.let {
+                        val bitmap = ImageUtils.rotateImageIfRequired(this, it, imageUri)
+                        updateImage(bitmap)
+                    }
+                }
+            }
+        }
     }
 
-    // Create the PhotoOptionDialogFragment
-    private fun replaceImage() {
-        val newFragment = PhotoOptionDialogFragment.newInstance(this)
-        newFragment?.show(supportFragmentManager, "photoOptionDialog")
+    override fun onPickClick() {
+        val pickIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(pickIntent, REQUEST_GALLERY_IMAGE)
     }
 
     companion object {
-        // Request code for processing camera capture Intent
+        // Request code for processing camera capture
         private const val REQUEST_CAPTURE_IMAGE = 1
+
+        // Request code for processing gallery image
+        private const val REQUEST_GALLERY_IMAGE = 2
     }
 }

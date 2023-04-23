@@ -2,6 +2,7 @@ package com.ant.placebook.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
@@ -55,7 +56,6 @@ class BookmarkDetailsViewModel(application: Application) :
     }
 
 
-
     // Get a BookmarkDetailsView object
     fun getBookmark(bookmarkId: Long): LiveData<BookmarkDetailsView>? {
         // If bookmarkDetailsView is null, then create a bookmarkDetailsView
@@ -78,6 +78,17 @@ class BookmarkDetailsViewModel(application: Application) :
         // Get the image
         fun getImage(context: Context) = id?.let {
             ImageUtils.loadBitmapFromFile(context, Bookmark.generateImageFilename(it))
+        }
+
+        // Set the image
+        fun setImage(context: Context, image: Bitmap) {
+            id?.let {
+                ImageUtils.saveBitmapToFile(
+                    context,
+                    image,
+                    Bookmark.generateImageFilename(it)
+                )
+            }
         }
     }
 
