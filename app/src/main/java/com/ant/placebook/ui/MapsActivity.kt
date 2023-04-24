@@ -98,7 +98,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Set up a listener for clicking on points of interest
         map.setOnInfoWindowClickListener {
             handleInfoWindowClick(it)
-            }
+        }
         // Set up a listener for clicking on the search button
         databinding.mainMapView.fab.setOnClickListener {
             searchAtCurrentLocation()
@@ -110,6 +110,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Call display a POI
     private fun displayPoi(pointOfInterest: PointOfInterest) {
+        showProgress()
         displayPoiGetPlaceStep(pointOfInterest)
     }
 
@@ -147,6 +148,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         TAG, "Place not found: " + exception.message + ", " +
                                 "statusCode: " + statusCode
                     )
+                    hideProgress()
                 }
             }
     }
@@ -195,11 +197,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                 ", " + "statusCode: " + statusCode
                     )
                 }
+                hideProgress()
             }
     }
 
     // Display the POI's marker
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?) {
+        hideProgress()
+
         // Add a marker with some info about the POI
         val marker = map.addMarker(
             MarkerOptions()
@@ -418,8 +423,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Set a flag to prevent user interaction
     private fun disableInteraction() {
-        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        )
     }
 
     // Clear FLAG_NOT_TOUCHABLE
@@ -433,6 +440,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun showProgress() {
         databinding.mainMapView.progressBar.visibility = ProgressBar.VISIBLE
         disableInteraction()
+    }
+
+    // Hide a progress bar
+    private fun hideProgress() {
+        databinding.mainMapView.progressBar.visibility = ProgressBar.GONE
+        enableInteraction()
     }
 
     // Move the map camera to a Bookmark
@@ -487,8 +500,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 // Convert latLng to a location
                 val location = Location("")
-                location.latitude = place. latLng?.latitude ?: 0.0
+                location.latitude = place.latLng?.latitude ?: 0.0
                 location.longitude = place.latLng.longitude ?: 0.0
+                updateMapToLocation(location)
+                showProgress()
 
                 // Display the place info window
                 displayPoiGetPhotoStep(place)

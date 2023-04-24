@@ -209,8 +209,6 @@ class BookmarkDetailsActivity : AppCompatActivity(),
             .create().show()
     }
 
-    // TODO private fun sharePlace()
-
     // Share a place
     private fun sharePlace() {
 
